@@ -1,0 +1,939 @@
+/* ====================================================================
+   ResearchMate AI - Professional Light SaaS Dashboard Stylesheet
+   Designed for STEM2Connect AI Hackathon
+   ==================================================================== */
+
+/* --- 1. Global Layout & Typography --- */
+html, body, [class*="css"] {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #0F172A; /* Deep Navy / Slate 900 */
+    background-color: #F8FAFC; /* Slate 50 */
+}
+
+/* App container spacing */
+.block-container {
+    padding-top: 1.5rem !important;
+    padding-bottom: 2.5rem !important;
+    max-width: 1160px !important;
+}
+
+/* Header & navigation chrome cleanup */
+header[data-testid="stHeader"] {
+    background-color: transparent !important;
+    height: 0 !important;
+}
+
+/* --- Inline SVG & Icon Utilities --- */
+.icon-inline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: -0.15em;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.section-heading-with-icon {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0F172A;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 1.2rem;
+    margin-bottom: 0.8rem;
+    letter-spacing: -0.01em;
+}
+
+/* --- 2. Left Sidebar Styling --- */
+section[data-testid="stSidebar"] {
+    background-color: #FFFFFF !important;
+    border-right: 1px solid #E2E8F0 !important;
+    padding-top: 0 !important;
+}
+
+/* Sidebar header area (contains collapse toggle) */
+div[data-testid="stSidebarHeader"] {
+    padding: 0.35rem 0.8rem 0 0.8rem !important;
+    height: auto !important;
+    min-height: auto !important;
+}
+
+section[data-testid="stSidebar"] .block-container {
+    padding-top: 0.4rem !important;
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+    padding-bottom: 1.5rem !important;
+}
+
+/* Sidebar Brand Header */
+.sidebar-brand-box {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 16px;
+}
+
+.brand-header-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.brand-icon-box {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    background: #EFF6FF;
+    border: 1px solid #DBEAFE;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #2563EB;
+    flex-shrink: 0;
+}
+
+.brand-text-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    text-align: left;
+}
+
+.sidebar-brand-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0F172A;
+    letter-spacing: -0.02em;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.sidebar-brand-subtitle {
+    font-size: 0.72rem;
+    color: #64748B;
+    margin-top: 2px;
+    margin-bottom: 0;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.brand-badge-row {
+    display: flex;
+    align-items: center;
+    padding-top: 6px;
+    border-top: 1px solid #F1F5F9;
+}
+
+.sidebar-tag {
+    display: inline-block;
+    background-color: #EEF2FF;
+    color: #4338CA;
+    border: 1px solid #C7D2FE;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 9999px;
+    letter-spacing: 0.02em;
+}
+
+/* Sidebar Section Heading (e.g. WORKSPACE) */
+.sidebar-section-heading {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #94A3B8;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-top: 4px;
+    margin-bottom: 6px;
+    padding-left: 2px;
+}
+
+/* Ensure no default radio label is visible */
+div[data-testid="stRadio"] > label {
+    display: none !important;
+}
+
+/* Sidebar navigation radio items */
+div[data-testid="stRadio"] > div[role="radiogroup"] {
+    gap: 4px !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+div[data-testid="stRadio"] label {
+    background: transparent !important;
+    border: 1px solid transparent !important;
+    border-radius: 8px !important;
+    padding: 8px 10px !important;
+    font-size: 0.88rem !important;
+    font-weight: 500 !important;
+    color: #475569 !important;
+    transition: all 0.15s ease-in-out !important;
+    cursor: pointer !important;
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 !important;
+}
+
+/* Hide default radio bullet circle for clean SaaS navigation */
+div[data-testid="stRadio"] label > div:first-child {
+    display: none !important;
+}
+
+/* Inner markdown container inside radio label */
+div[data-testid="stRadio"] label div[data-testid="stMarkdownContainer"] {
+    width: 100% !important;
+}
+
+div[data-testid="stRadio"] label div[data-testid="stMarkdownContainer"] p {
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    font-size: 0.88rem !important;
+    color: inherit !important;
+}
+
+/* Hover state */
+div[data-testid="stRadio"] label:hover {
+    background: #F8FAFC !important;
+    border-color: #E2E8F0 !important;
+    color: #0F172A !important;
+}
+
+/* Active navigation item highlight: subtle light-blue background and blue text */
+div[data-testid="stRadio"] label:has(input:checked) {
+    background-color: #EFF6FF !important;
+    border: 1px solid #BFDBFE !important;
+    color: #1D4ED8 !important;
+    font-weight: 600 !important;
+}
+
+div[data-testid="stRadio"] label:has(input:checked) div[data-testid="stMarkdownContainer"] p {
+    color: #1D4ED8 !important;
+    font-weight: 600 !important;
+}
+
+div[data-testid="stRadio"] label:has(input:checked) span {
+    color: #1D4ED8 !important;
+}
+
+/* Sidebar info card */
+.sidebar-info-card {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 18px;
+    font-size: 0.8rem;
+    color: #475569;
+}
+
+.sidebar-info-title {
+    font-weight: 700;
+    color: #0F172A;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.82rem;
+}
+
+.sidebar-info-card strong {
+    color: #1E293B;
+}
+
+/* --- 3. Hero & Welcome Section --- */
+.hero-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-top: 4px solid #2563EB; /* Professional Blue Accent */
+    border-radius: 12px;
+    padding: 30px 28px;
+    margin-bottom: 22px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #EFF6FF;
+    color: #1E40AF;
+    border: 1px solid #BFDBFE;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.hero-heading {
+    font-size: 2.1rem;
+    font-weight: 800;
+    color: #0F172A;
+    line-height: 1.22;
+    letter-spacing: -0.03em;
+    margin-bottom: 10px;
+}
+
+.hero-subtitle {
+    font-size: 1.05rem;
+    color: #475569;
+    line-height: 1.55;
+    margin-bottom: 16px;
+    max-width: 780px;
+}
+
+.hero-stats-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.hero-stat-pill {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.82rem;
+    color: #334155;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* --- 4. SaaS Card Component --- */
+.saas-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+}
+
+.saas-card-header {
+    margin-bottom: 16px;
+}
+
+.saas-card-title {
+    font-size: 1.28rem;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0 0 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    letter-spacing: -0.01em;
+}
+
+.saas-card-desc {
+    font-size: 0.88rem;
+    color: #64748B;
+    margin: 0;
+}
+
+/* --- 5. Form Elements, Text Area & Buttons --- */
+div[data-testid="stTextArea"] textarea {
+    background-color: #FFFFFF !important;
+    color: #0F172A !important;
+    border: 1px solid #CBD5E1 !important;
+    border-radius: 10px !important;
+    font-size: 0.94rem !important;
+    line-height: 1.6 !important;
+    padding: 14px !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+div[data-testid="stTextArea"] textarea:focus {
+    border-color: #2563EB !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12) !important;
+    outline: none !important;
+}
+
+/* File Uploader styling */
+div[data-testid="stFileUploader"] {
+    background-color: #F8FAFC;
+    border: 1px dashed #CBD5E1;
+    border-radius: 10px;
+    padding: 8px;
+}
+
+/* Primary Button Styling */
+div[data-testid="stButton"] button[kind="primary"],
+.stButton > button[kind="primary"] {
+    background-color: #2563EB !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+    padding: 10px 22px !important;
+    box-shadow: 0 1px 2px rgba(37, 99, 235, 0.15) !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+div[data-testid="stButton"] button[kind="primary"]:hover,
+.stButton > button[kind="primary"]:hover {
+    background-color: #1D4ED8 !important;
+    box-shadow: 0 4px 8px rgba(37, 99, 235, 0.25) !important;
+    transform: translateY(-1px);
+}
+
+/* Secondary Button Styling */
+div[data-testid="stButton"] button[kind="secondary"],
+.stButton > button[kind="secondary"] {
+    background-color: #FFFFFF !important;
+    color: #334155 !important;
+    border: 1px solid #CBD5E1 !important;
+    border-radius: 8px !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    padding: 8px 16px !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+div[data-testid="stButton"] button[kind="secondary"]:hover,
+.stButton > button[kind="secondary"]:hover {
+    background-color: #F1F5F9 !important;
+    border-color: #94A3B8 !important;
+    color: #0F172A !important;
+}
+
+/* Counter & Metrics Bar */
+.counter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    padding: 8px 14px;
+    margin-top: 6px;
+    margin-bottom: 14px;
+    font-size: 0.83rem;
+    color: #64748B;
+}
+
+.counter-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.counter-value {
+    color: #1E293B;
+    font-weight: 600;
+}
+
+/* --- 6. Results Section & Dimension Cards --- */
+.results-header-box {
+    background: #F8FAFC;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+}
+
+.results-header-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0 0 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.results-header-desc {
+    font-size: 0.88rem;
+    color: #64748B;
+    margin: 0;
+}
+
+/* Dimension Cards */
+.dimension-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 22px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                border-color 0.2s ease;
+}
+
+.dimension-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px -4px rgba(15, 23, 42, 0.09), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
+}
+
+.dimension-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    gap: 12px;
+}
+
+.dimension-title-group {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dimension-icon-bubble {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #E6F0FF;
+    color: #1D4ED8;
+    border: 1px solid #BFDBFE;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.dimension-card:hover .dimension-icon-bubble {
+    transform: scale(1.08);
+}
+
+.dimension-name {
+    font-size: 1.08rem;
+    font-weight: 700;
+    color: #0F172A;
+    margin: 0;
+}
+
+.dimension-target {
+    font-size: 0.8rem;
+    color: #64748B;
+    margin-top: 2px;
+}
+
+/* ====================================================================
+   Refined Coordinated Palette for the 5 Research Dimensions
+   ==================================================================== */
+
+/* 1. Simple Summary: Crisp Soft Blue (#E6F0FF) / Accent (#1D4ED8) */
+.dim-summary {
+    background-color: #E6F0FF !important;
+    border: 1px solid #BFDBFE !important;
+}
+.dim-summary:hover {
+    border-color: #93C5FD !important;
+}
+.dim-summary .dimension-icon-bubble,
+.dim-summary .feature-box-icon {
+    background-color: #D5E7FF !important;
+    border: 1px solid #BFDBFE !important;
+    color: #1D4ED8 !important;
+}
+
+/* 2. Research Objectives: Crisp Soft Teal (#E2F5F1) / Accent (#0F766E) */
+.dim-objectives {
+    background-color: #E2F5F1 !important;
+    border: 1px solid #B6E8DF !important;
+}
+.dim-objectives:hover {
+    border-color: #75D8CA !important;
+}
+.dim-objectives .dimension-icon-bubble,
+.dim-objectives .feature-box-icon {
+    background-color: #C8ECE5 !important;
+    border: 1px solid #9FE0D4 !important;
+    color: #0F766E !important;
+}
+
+/* 3. Key Findings: Crisp Soft Violet (#EEE8FF) / Accent (#6D28D9) */
+.dim-findings {
+    background-color: #EEE8FF !important;
+    border: 1px solid #DDD6FE !important;
+}
+.dim-findings:hover {
+    border-color: #C4B5FD !important;
+}
+.dim-findings .dimension-icon-bubble,
+.dim-findings .feature-box-icon {
+    background-color: #DFD5FE !important;
+    border: 1px solid #DDD6FE !important;
+    color: #6D28D9 !important;
+}
+
+/* 4. Important Keywords: Crisp Soft Orange (#FFF0DF) / Accent (#B45309) */
+.dim-keywords {
+    background-color: #FFF0DF !important;
+    border: 1px solid #FED7AA !important;
+}
+.dim-keywords:hover {
+    border-color: #FDBA74 !important;
+}
+.dim-keywords .dimension-icon-bubble,
+.dim-keywords .feature-box-icon {
+    background-color: #FFE3C2 !important;
+    border: 1px solid #FED7AA !important;
+    color: #B45309 !important;
+}
+
+/* 5. Future Research Questions: Crisp Soft Pink (#FCE8F1) / Accent (#BE185D) */
+.dim-questions {
+    background-color: #FCE8F1 !important;
+    border: 1px solid #FBCFE8 !important;
+}
+.dim-questions:hover {
+    border-color: #F9A8D4 !important;
+}
+.dim-questions .dimension-icon-bubble,
+.dim-questions .feature-box-icon {
+    background-color: #F9D1E4 !important;
+    border: 1px solid #FBCFE8 !important;
+    color: #BE185D !important;
+}
+
+/* Wireframe Container inside tinted dimension cards */
+.wireframe-container {
+    background: rgba(255, 255, 255, 0.82) !important;
+    border: 1.5px dashed #CBD5E1 !important;
+    border-radius: 8px;
+    padding: 16px 18px;
+    color: #334155 !important;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    margin-top: 8px;
+}
+
+.wireframe-note {
+    font-size: 0.8rem;
+    color: #64748B;
+    font-style: italic;
+    margin-top: 8px;
+}
+
+/* Badges */
+.badge-placeholder {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #FEF3C7;
+    color: #92400E;
+    border: 1px solid #FDE68A;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    white-space: nowrap;
+}
+
+.badge-ready {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #ECFDF5;
+    color: #065F46;
+    border: 1px solid #A7F3D0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 9999px;
+}
+
+/* Streamlit Tabs Customization */
+div[data-testid="stTabs"] button[role="tab"] {
+    font-size: 0.92rem !important;
+    font-weight: 600 !important;
+    color: #64748B !important;
+    padding: 10px 16px !important;
+    border-radius: 8px 8px 0 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
+    color: #2563EB !important;
+    border-bottom: 2px solid #2563EB !important;
+}
+
+/* --- 7. Features Grid & Cards (Home & About) --- */
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-top: 14px;
+    margin-bottom: 14px;
+}
+
+.feature-box {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                border-color 0.2s ease;
+}
+
+.feature-box:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 28px -4px rgba(15, 23, 42, 0.10), 0 4px 8px -2px rgba(15, 23, 42, 0.04);
+}
+
+.feature-box-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: #E6F0FF;
+    border: 1px solid #BFDBFE;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1D4ED8;
+    margin-bottom: 12px;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.feature-box:hover .feature-box-icon {
+    transform: scale(1.08);
+}
+
+.feature-box-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0F172A;
+    margin-bottom: 6px;
+}
+
+.feature-box-text {
+    font-size: 0.85rem;
+    color: #475569;
+    line-height: 1.55;
+    margin: 0;
+}
+
+/* Gemini AI Integration Card (Premium Feature with Refined Gradient) */
+.feature-box-gemini {
+    background: linear-gradient(135deg, #E6F0FF 0%, #EEE8FF 100%) !important;
+    border: 1px solid #C4B5FD !important;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(109, 40, 217, 0.08);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                border-color 0.2s ease;
+}
+
+.feature-box-gemini:hover {
+    transform: translateY(-4px);
+    border-color: #A78BFA !important;
+    box-shadow: 0 16px 32px -4px rgba(109, 40, 217, 0.16), 0 4px 8px -2px rgba(29, 78, 216, 0.10) !important;
+}
+
+.gemini-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.gemini-icon-bubble {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #D5E7FF 0%, #DFD5FE 100%) !important;
+    border: 1px solid #C4B5FD !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6D28D9 !important;
+    margin-bottom: 0 !important;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.feature-box-gemini:hover .gemini-icon-bubble {
+    transform: scale(1.08);
+}
+
+.gemini-phase-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background-color: #DDD6FE;
+    color: #5B21B6;
+    border: 1px solid #C4B5FD;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 9999px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+/* --- Workflow Step Cards (How ResearchMate AI Works) --- */
+.workflow-card {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    border-radius: 12px;
+    padding: 24px 20px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
+                border-color 0.2s ease;
+}
+
+.workflow-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 28px -4px rgba(15, 23, 42, 0.10);
+}
+
+.workflow-step-pill {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+}
+
+.workflow-icon-bubble {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 14px;
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.workflow-card:hover .workflow-icon-bubble {
+    transform: scale(1.08);
+}
+
+/* Step 01: Blue theme */
+.workflow-1:hover {
+    border-color: #93C5FD;
+}
+.workflow-1 .workflow-step-pill {
+    background: #E6F0FF;
+    color: #1D4ED8;
+    border: 1px solid #BFDBFE;
+}
+.workflow-1 .workflow-icon-bubble {
+    background: #E6F0FF;
+    color: #1D4ED8;
+    border: 1px solid #BFDBFE;
+}
+
+/* Step 02: Violet theme */
+.workflow-2:hover {
+    border-color: #C4B5FD;
+}
+.workflow-2 .workflow-step-pill {
+    background: #EEE8FF;
+    color: #6D28D9;
+    border: 1px solid #DDD6FE;
+}
+.workflow-2 .workflow-icon-bubble {
+    background: #EEE8FF;
+    color: #6D28D9;
+    border: 1px solid #DDD6FE;
+}
+
+/* Step 03: Teal theme */
+.workflow-3:hover {
+    border-color: #75D8CA;
+}
+.workflow-3 .workflow-step-pill {
+    background: #E2F5F1;
+    color: #0F766E;
+    border: 1px solid #B6E8DF;
+}
+.workflow-3 .workflow-icon-bubble {
+    background: #E2F5F1;
+    color: #0F766E;
+    border: 1px solid #B6E8DF;
+}
+
+.workflow-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #0F172A;
+    margin-bottom: 8px;
+}
+
+.workflow-text {
+    font-size: 0.85rem;
+    color: #475569;
+    line-height: 1.55;
+    margin: 0;
+}
+
+/* --- 8. Footer Section --- */
+.footer-divider {
+    border-top: 1px solid #E2E8F0;
+    margin-top: 40px;
+    margin-bottom: 24px;
+}
+
+.footer-content {
+    text-align: center;
+    padding-bottom: 20px;
+}
+
+.footer-brand {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #1E293B;
+    margin-bottom: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.footer-disclaimer {
+    font-size: 0.8rem;
+    color: #64748B;
+    margin-top: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.footer-badge {
+    font-size: 0.74rem;
+    color: #94A3B8;
+    margin-top: 8px;
+}
