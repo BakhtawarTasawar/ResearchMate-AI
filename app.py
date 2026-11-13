@@ -10,6 +10,21 @@ clear, structured insights. Styled with consistent Lucide-style outline icons.
 
 from pathlib import Path
 import streamlit as st
+import os
+from dotenv import load_dotenv
+from google import genai
+from pypdf import PdfReader
+
+# Load Gemini API key from .env
+load_dotenv()
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+if not GEMINI_API_KEY:
+    st.error("Gemini API key not found. Please check your .env file.")
+    st.stop()
+
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 # ====================================================================
 # 1. Page Configuration & Setup
@@ -195,13 +210,98 @@ def initialize_session_state():
         st.session_state["analysis_triggered"] = False
     if "submitted_abstract" not in st.session_state:
         st.session_state["submitted_abstract"] = ""
+    if "gemini_results" not in st.session_state:
+        st.session_state["gemini_results"] = None
+    if "gemini_error" not in st.session_state:
+        st.session_state["gemini_error"] = None
 
 
 initialize_session_state()
 
 
 # ====================================================================
-# 6. Sidebar Navigation Component
+# 6. Gemini API Analysis Function
+# ====================================================================
+def analyze_with_gemini(abstract_content: str) -> dict:
+    """
+    Send the abstract to Gemini and return five structured research sections.
+    Returns a dict with keys: summary, objectives, findings, keywords, questions.
+    Raises ValueError on API or parsing failures.
+    """
+    prompt = f"""You are a scientific research analyst. Analyze the following research paper abstract and return a structured JSON response.
+
+ABSTRACT:
+\"\"\"
+{abstract_content}
+\"\"\"
+
+Return ONLY valid JSON — no markdown fences, no commentary, no extra text. Use this exact structure:
+
+{{
+  "summary": "A clear 2-3 sentence plain-language explanation of the study's problem, methodology, and main conclusion. Use accessible language suitable for undergraduate STEM students. If any element is not stated in the abstract, write: Not stated in the abstract.",
+  "objectives": [
+    "Primary research question or hypothesis as stated in the abstract.",
+    "Additional specific aims or sub-goals, if mentioned.",
+    "Write 'Not stated in the abstract' if objectives are not explicitly mentioned."
+  ],
+  "findings": [
+    "The most significant result or discovery reported.",
+    "Quantitative metrics, percentage changes, or statistical values if present.",
+    "Comparative outcome versus baseline or prior work, if stated.",
+    "Write 'Not stated in the abstract' if no findings are reported."
+  ],
+  "keywords": [
+    "keyword1",
+    "keyword2",
+    "keyword3",
+    "keyword4",
+    "keyword5"
+  ],
+  "questions": [
+    "A clearly labelled suggested future research direction based on this study.",
+    "Another open question implied by the limitations or scope of this work.",
+    "A broader hypothesis this study might enable."
+  ]
+}}
+
+STRICT RULES:
+- Base ALL content strictly on the supplied abstract text.
+- Never invent results, numerical values, methods, or conclusions not in the abstract.
+- Never fabricate statistics or citations.
+- If information is missing, write exactly: Not stated in the abstract.
+- Future research questions must be framed as suggestions, not as reported findings.
+- keywords must be 4-10 single terms or short phrases extracted from the abstract.
+- Return only the raw JSON object."""
+
+    response = client.models.generate_content(
+        model="gemini-3.5-flash-lite",
+        contents=prompt
+    )
+
+    raw = response.text.strip()
+
+    # Strip accidental markdown code fences if present
+    if raw.startswith("```"):
+        lines = raw.splitlines()
+        raw = "\n".join(
+            line for line in lines
+            if not line.strip().startswith("```")
+        ).strip()
+
+    import json
+    parsed = json.loads(raw)
+
+    # Validate required keys
+    required = {"summary", "objectives", "findings", "keywords", "questions"}
+    missing = required - parsed.keys()
+    if missing:
+        raise ValueError(f"Gemini response missing expected keys: {missing}")
+
+    return parsed
+
+
+# ====================================================================
+# 7. Sidebar Navigation Component
 # ====================================================================
 def render_sidebar():
     """Render the modern sidebar with branding, outline navigation icons, and info."""
@@ -259,10 +359,10 @@ def render_sidebar():
                     System Overview
                 </div>
                 <div style="margin-bottom: 4px;">
-                    <strong>AI Engine:</strong> Gemini 1.5 (Planned)
+                    <strong>AI Engine:</strong> Gemini 3.5 Flash-Lite (Connected)
                 </div>
                 <div style="margin-bottom: 4px;">
-                    <strong>Mode:</strong> UI Prototype v0.2
+                    <strong>Mode:</strong> Live AI Analysis v1.0
                 </div>
                 <div style="margin-bottom: 4px;">
                     <strong>Theme:</strong> Light SaaS Dashboard
@@ -472,11 +572,11 @@ def render_home_page():
                     <div class="gemini-icon-bubble">
                         {icon_svg("cpu", size=20, color="#6D28D9")}
                     </div>
-                    <span class="gemini-phase-badge">Phase 2 Planned</span>
+                    <span class="gemini-phase-badge">Live — Connected</span>
                 </div>
                 <div class="feature-box-title" style="color: #1E1B4B; margin-top: 6px;">Gemini AI Integration</div>
                 <div class="feature-box-text" style="color: #4338CA;">
-                    Scheduled for Phase 2: Live AI inference via Google Gemini with structured JSON schema outputs.
+                    Powered by Gemini 3.5 Flash-Lite: live AI inference with structured JSON schema outputs across all 5 research dimensions.
                 </div>
             </div>
             """,
@@ -564,44 +664,92 @@ def render_analysis_workspace():
         """,
         unsafe_allow_html=True
     )
-
-    # Optional .txt File Uploader
+# Optional PDF and TXT File Uploader
     uploaded_file = st.file_uploader(
-        label="Upload a scientific paper abstract (.txt file)",
-        type=["txt"],
-        help="Select a .txt file containing the research paper abstract.",
+        label="Upload a scientific research paper (.pdf or .txt)",
+        type=["pdf", "txt"],
+        help="Upload a research paper PDF or a text file containing its abstract.",
         key="abstract_file_uploader"
     )
 
     uploaded_text_content = ""
+
     if uploaded_file is not None:
         try:
-            raw_bytes = uploaded_file.getvalue()
-            try:
-                uploaded_text_content = raw_bytes.decode("utf-8").strip()
-            except UnicodeDecodeError:
-                uploaded_text_content = raw_bytes.decode("latin-1", errors="replace").strip()
+            if uploaded_file.name.lower().endswith(".pdf"):
+                uploaded_file.seek(0)
+                pdf_reader = PdfReader(uploaded_file)
+
+                if pdf_reader.is_encrypted:
+                    raise ValueError(
+                        "This PDF is password-protected. Please upload an unlocked PDF."
+                    )
+
+                extracted_pages = []
+
+                for page in pdf_reader.pages:
+                    page_text = page.extract_text() or ""
+                    if page_text.strip():
+                        extracted_pages.append(page_text)
+
+                uploaded_text_content = "\n\n".join(extracted_pages).strip()
+
+                if not uploaded_text_content:
+                    raise ValueError(
+                        "No readable text found. This may be a scanned PDF. "
+                        "OCR support is needed for scanned documents."
+                    )
+
+            else:
+                raw_bytes = uploaded_file.getvalue()
+
+                try:
+                    uploaded_text_content = raw_bytes.decode("utf-8").strip()
+                except UnicodeDecodeError:
+                    uploaded_text_content = raw_bytes.decode(
+                        "latin-1", errors="replace"
+                    ).strip()
+
+                if not uploaded_text_content:
+                    raise ValueError("The uploaded TXT file is empty.")
 
             st.markdown(
                 f"""
-                <div style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 12px 14px; margin-top: 10px; margin-bottom: 12px; font-size: 0.88rem; color: #1E40AF; display: flex; align-items: center; gap: 8px;">
-                    <span class="icon-inline" style="color: #2563EB;">{icon_svg("file-check", size=18, color="#2563EB")}</span>
-                    <span><strong>File Uploaded:</strong> <code>{uploaded_file.name}</code> ({len(uploaded_text_content):,} characters | ~{len(uploaded_text_content.split()):,} words)</span>
+                <div style="background: #EFF6FF; border: 1px solid #BFDBFE;
+                border-radius: 8px; padding: 12px 14px; margin-top: 10px;
+                margin-bottom: 12px; font-size: 0.88rem; color: #1E40AF;">
+                    <strong>File Uploaded:</strong>
+                    <code>{uploaded_file.name}</code><br>
+                    {len(uploaded_text_content):,} characters |
+                    ~{len(uploaded_text_content.split()):,} words
                 </div>
                 """,
                 unsafe_allow_html=True
             )
 
             col_file1, col_file2 = st.columns([1, 3])
+
             with col_file1:
-                if st.button("Load File into Editor", icon=":material/file_open:", key="btn_apply_file"):
+                if st.button(
+                    "Load File into Editor",
+                    icon=":material/file_open:",
+                    key="btn_apply_file"
+                ):
                     st.session_state["abstract_text"] = uploaded_text_content
                     st.rerun()
+
             with col_file2:
-                st.caption("Click to transfer the uploaded file's contents into the text area below.")
+                st.caption(
+                    "Click to transfer the uploaded file's contents "
+                    "into the text area below."
+                )
 
         except Exception as file_error:
-            st.error(f"Error reading uploaded file: {file_error}", icon=":material/error:")
+            uploaded_text_content = ""
+            st.error(
+                f"Error reading uploaded file: {file_error}",
+                icon=":material/error:"
+            )
 
     # Abstract Text Area Input
     abstract_input = st.text_area(
@@ -665,6 +813,8 @@ def render_analysis_workspace():
             st.session_state["abstract_text"] = ""
             st.session_state["analysis_triggered"] = False
             st.session_state["submitted_abstract"] = ""
+            st.session_state["gemini_results"] = None
+            st.session_state["gemini_error"] = None
             st.rerun()
 
     # Determine effective text for analysis
@@ -675,8 +825,24 @@ def render_analysis_workspace():
     # Handle Analysis Action
     if analyze_clicked:
         if effective_abstract:
+            # Only call Gemini if the abstract changed since last run
+            if effective_abstract != st.session_state.get("submitted_abstract", ""):
+                st.session_state["gemini_results"] = None
+                st.session_state["gemini_error"] = None
+
             st.session_state["analysis_triggered"] = True
             st.session_state["submitted_abstract"] = effective_abstract
+
+            # Call Gemini if no cached result exists yet
+            if st.session_state["gemini_results"] is None:
+                with st.spinner("Analyzing abstract with Gemini 3.5 Flash-Lite…"):
+                    try:
+                        result = analyze_with_gemini(effective_abstract)
+                        st.session_state["gemini_results"] = result
+                        st.session_state["gemini_error"] = None
+                    except Exception as exc:
+                        st.session_state["gemini_results"] = None
+                        st.session_state["gemini_error"] = str(exc)
         else:
             st.session_state["analysis_triggered"] = False
             st.warning("Please enter an abstract or upload a .txt file before running analysis.", icon=":material/warning:")
@@ -697,18 +863,27 @@ def render_analysis_workspace():
 # ====================================================================
 def render_results_area(abstract_content: str):
     """
-    Render the 5 structured results sections upon abstract submission.
-    Features Lucide outline icons and structured output preview.
+    Render the 5 structured results sections populated with live Gemini output.
+    Falls back to clear error messaging on API failure.
     """
-    # Success & Status Notifications with Outline Icons
-    st.success("Scientific abstract received and verified.", icon=":material/check_circle:")
+    results = st.session_state.get("gemini_results")
+    error = st.session_state.get("gemini_error")
 
-    st.info(
-        "AI Analysis Status: Your abstract has been processed by ResearchMate AI. "
-        "Full AI-powered extraction will be generated automatically once Google Gemini API is "
-        "connected in Phase 2. Below is the structured analysis framework ready for live model integration.",
-        icon=":material/info:"
-    )
+    # --- Status banner ---
+    if results:
+        st.success(
+            "Analysis complete. Gemini 3.5 Flash-Lite generated structured insights from your abstract.",
+            icon=":material/check_circle:"
+        )
+    elif error:
+        st.error(
+            f"Gemini API Error: {error}\n\n"
+            "Please check your API key in `.env`, ensure the `GEMINI_API_KEY` variable is set, "
+            "and try again.",
+            icon=":material/error:"
+        )
+    else:
+        st.warning("No results available. Please click Analyze Abstract to run analysis.", icon=":material/warning:")
 
     # Received Abstract Inspector (Preserves existing functionality)
     with st.expander("View Submitted Abstract Text", expanded=False):
@@ -733,7 +908,49 @@ def render_results_area(abstract_content: str):
         unsafe_allow_html=True
     )
 
-    # 5 Separated Tabs with Outline Icons
+    # --- Helper: render a list of items as styled bullet rows ---
+    def render_list_items(items: list, accent: str) -> str:
+        if not items:
+            return '<p style="color:#64748B;font-size:0.9rem;">No data returned.</p>'
+        rows = ""
+        for item in items:
+            rows += (
+                f'<div style="display:flex;align-items:flex-start;gap:10px;'
+                f'margin-bottom:10px;padding:10px 12px;background:#FFFFFF;'
+                f'border-radius:7px;border:1px solid #F1F5F9;">'
+                f'<span style="color:{accent};font-size:1rem;line-height:1.4;flex-shrink:0;">&#9654;</span>'
+                f'<span style="color:#1E293B;font-size:0.9rem;line-height:1.55;">{item}</span>'
+                f'</div>'
+            )
+        return rows
+
+    # --- Helper: render keyword tags ---
+    def render_keyword_tags(keywords: list, accent: str, bg: str) -> str:
+        if not keywords:
+            return '<p style="color:#64748B;font-size:0.9rem;">No keywords returned.</p>'
+        tags = ""
+        for kw in keywords:
+            tags += (
+                f'<span style="display:inline-block;background:{bg};color:{accent};'
+                f'border:1px solid {accent}33;border-radius:20px;padding:4px 14px;'
+                f'font-size:0.82rem;font-weight:600;margin:4px 4px 4px 0;">{kw}</span>'
+            )
+        return f'<div style="margin-top:4px;">{tags}</div>'
+
+    # --- Badge: Gemini-generated ---
+    gemini_badge = (
+        f'<span style="display:inline-flex;align-items:center;gap:5px;'
+        f'background:#EEE8FF;color:#6D28D9;border:1px solid #DDD6FE;'
+        f'border-radius:20px;padding:3px 10px;font-size:0.76rem;font-weight:600;">'
+        f'{icon_svg("cpu", size=11, color="#6D28D9")} Gemini 3.5 Flash-Lite</span>'
+    )
+    waiting_badge = (
+        f'<span class="badge-placeholder">'
+        f'<span class="icon-inline">{icon_svg("clock", size=13, color="#92400E")}</span>'
+        f'Awaiting Analysis</span>'
+    )
+
+    # 5 Separated Tabs
     tab1, tab2, tab3, tab4, tab5 = st.tabs([
         ":material/description: Simple Summary",
         ":material/track_changes: Research Objectives",
@@ -742,184 +959,145 @@ def render_results_area(abstract_content: str):
         ":material/explore: Future Questions"
     ])
 
-    # Tab 1: Simple Summary
+    # ---- Tab 1: Simple Summary ----
     with tab1:
+        badge = gemini_badge if results else waiting_badge
+        summary_text = results.get("summary", "Not stated in the abstract.") if results else ""
+        content_html = (
+            f'<p style="color:#1E293B;font-size:0.95rem;line-height:1.65;margin:0;">{summary_text}</p>'
+            if results else
+            '<p style="color:#64748B;font-size:0.9rem;">Run analysis to generate a plain-language summary.</p>'
+        )
         st.markdown(
             f"""
             <div class="dimension-card dim-summary">
                 <div class="dimension-header">
                     <div class="dimension-title-group">
-                        <div class="dimension-icon-bubble">
-                            {icon_svg("book-open", size=20, color="#2563EB")}
-                        </div>
+                        <div class="dimension-icon-bubble">{icon_svg("book-open", size=20, color="#1D4ED8")}</div>
                         <div>
                             <div class="dimension-name">Simple Summary</div>
                             <div class="dimension-target">Accessible Plain-Language Synthesis</div>
                         </div>
                     </div>
-                    <span class="badge-placeholder">
-                        <span class="icon-inline">{icon_svg("clock", size=13, color="#92400E")}</span>
-                        Awaiting Gemini API Integration
-                    </span>
+                    {badge}
                 </div>
-                <p style="color: #475569; font-size: 0.9rem; line-height: 1.55; margin-bottom: 12px;">
-                    This section will synthesize the paper's core hypothesis, scientific methodology,
-                    and main conclusion into a clear, jargon-free 2 to 3 sentence summary designed for students and cross-disciplinary researchers.
-                </p>
-                <div class="wireframe-container">
-                    <strong>Planned Gemini Output Schema:</strong><br>
-                    - <em>Executive Plain-Language Abstract:</em> Contextual problem statement, experimental solution, and final scientific verdict.<br>
-                    - <em>Target Reading Level:</em> Undergraduate / General STEM comprehension.<br>
-                    <div class="wireframe-note">[Live AI inference will replace this block upon Gemini API key configuration]</div>
-                </div>
+                {content_html}
             </div>
             """,
             unsafe_allow_html=True
         )
 
-    # Tab 2: Research Objectives
+    # ---- Tab 2: Research Objectives ----
     with tab2:
+        badge = gemini_badge if results else waiting_badge
+        objectives = results.get("objectives", []) if results else []
+        content_html = (
+            render_list_items(objectives, "#0F766E")
+            if results else
+            '<p style="color:#64748B;font-size:0.9rem;">Run analysis to extract research objectives.</p>'
+        )
         st.markdown(
             f"""
             <div class="dimension-card dim-objectives">
                 <div class="dimension-header">
                     <div class="dimension-title-group">
-                        <div class="dimension-icon-bubble">
-                            {icon_svg("target", size=20, color="#0F766E")}
-                        </div>
+                        <div class="dimension-icon-bubble">{icon_svg("target", size=20, color="#0F766E")}</div>
                         <div>
                             <div class="dimension-name">Research Objectives</div>
-                            <div class="dimension-target">Core Hypotheses & Investigated Aims</div>
+                            <div class="dimension-target">Core Hypotheses &amp; Investigated Aims</div>
                         </div>
                     </div>
-                    <span class="badge-placeholder">
-                        <span class="icon-inline">{icon_svg("clock", size=13, color="#92400E")}</span>
-                        Awaiting Gemini API Integration
-                    </span>
+                    {badge}
                 </div>
-                <p style="color: #475569; font-size: 0.9rem; line-height: 1.55; margin-bottom: 12px;">
-                    This section will isolate the primary research question, investigated hypotheses,
-                    and specific experimental aims the authors sought to validate or disprove.
-                </p>
-                <div class="wireframe-container">
-                    <strong>Planned Gemini Output Schema:</strong><br>
-                    - <em>Primary Research Question:</em> The central problem under investigation.<br>
-                    - <em>Specific Aims (Bulleted):</em> Concrete experimental targets and validation criteria.<br>
-                    - <em>Methodological Scope:</em> Experimental boundaries and biological/physical systems examined.<br>
-                    <div class="wireframe-note">[Live AI inference will replace this block upon Gemini API key configuration]</div>
-                </div>
+                {content_html}
             </div>
             """,
             unsafe_allow_html=True
         )
 
-    # Tab 3: Key Findings
+    # ---- Tab 3: Key Findings ----
     with tab3:
+        badge = gemini_badge if results else waiting_badge
+        findings = results.get("findings", []) if results else []
+        content_html = (
+            render_list_items(findings, "#6D28D9")
+            if results else
+            '<p style="color:#64748B;font-size:0.9rem;">Run analysis to extract key findings.</p>'
+        )
         st.markdown(
             f"""
             <div class="dimension-card dim-findings">
                 <div class="dimension-header">
                     <div class="dimension-title-group">
-                        <div class="dimension-icon-bubble">
-                            {icon_svg("lightbulb", size=20, color="#7C3AED")}
-                        </div>
+                        <div class="dimension-icon-bubble">{icon_svg("lightbulb", size=20, color="#6D28D9")}</div>
                         <div>
                             <div class="dimension-name">Key Findings</div>
-                            <div class="dimension-target">Empirical Results, Discoveries & Metrics</div>
+                            <div class="dimension-target">Empirical Results, Discoveries &amp; Metrics</div>
                         </div>
                     </div>
-                    <span class="badge-placeholder">
-                        <span class="icon-inline">{icon_svg("clock", size=13, color="#92400E")}</span>
-                        Awaiting Gemini API Integration
-                    </span>
+                    {badge}
                 </div>
-                <p style="color: #475569; font-size: 0.9rem; line-height: 1.55; margin-bottom: 12px;">
-                    This section will extract the most significant empirical discoveries, measured improvements,
-                    statistical outcomes, and experimental observations reported in the abstract.
-                </p>
-                <div class="wireframe-container">
-                    <strong>Planned Gemini Output Schema:</strong><br>
-                    - <em>Primary Breakthrough:</em> Leading quantitative or qualitative breakthrough reported.<br>
-                    - <em>Key Metrics & Statistics:</em> Concrete values, fold-changes, percentage improvements, or p-values.<br>
-                    - <em>Comparative Baselines:</em> How the findings compare with prior state-of-the-art methods.<br>
-                    <div class="wireframe-note">[Live AI inference will replace this block upon Gemini API key configuration]</div>
-                </div>
+                {content_html}
             </div>
             """,
             unsafe_allow_html=True
         )
 
-    # Tab 4: Important Keywords
+    # ---- Tab 4: Important Keywords ----
     with tab4:
+        badge = gemini_badge if results else waiting_badge
+        keywords = results.get("keywords", []) if results else []
+        content_html = (
+            render_keyword_tags(keywords, "#B45309", "#FFF0DF")
+            if results else
+            '<p style="color:#64748B;font-size:0.9rem;">Run analysis to extract scientific keywords.</p>'
+        )
         st.markdown(
             f"""
             <div class="dimension-card dim-keywords">
                 <div class="dimension-header">
                     <div class="dimension-title-group">
-                        <div class="dimension-icon-bubble">
-                            {icon_svg("tag", size=20, color="#C2410C")}
-                        </div>
+                        <div class="dimension-icon-bubble">{icon_svg("tag", size=20, color="#B45309")}</div>
                         <div>
                             <div class="dimension-name">Important Keywords</div>
-                            <div class="dimension-target">Scientific Ontology & Concept Tags</div>
+                            <div class="dimension-target">Scientific Ontology &amp; Concept Tags</div>
                         </div>
                     </div>
-                    <span class="badge-placeholder">
-                        <span class="icon-inline">{icon_svg("clock", size=13, color="#92400E")}</span>
-                        Awaiting Gemini API Integration
-                    </span>
+                    {badge}
                 </div>
-                <p style="color: #475569; font-size: 0.9rem; line-height: 1.55; margin-bottom: 12px;">
-                    This section will extract key scientific terminology, taxonomy tags, methodologies,
-                    and domain concepts to facilitate literature indexing and cross-paper search.
-                </p>
-                <div class="wireframe-container">
-                    <strong>Planned Gemini Output Schema:</strong><br>
-                    - <em>Domain Tags:</em> 6 to 10 categorized badges spanning Methodology, Biological Entities, and Applications.<br>
-                    - <em>Quick Concept Glossary:</em> One-sentence definitions for the paper's most complex technical terms.<br>
-                    <div class="wireframe-note">[Live AI inference will replace this block upon Gemini API key configuration]</div>
-                </div>
+                {content_html}
             </div>
             """,
             unsafe_allow_html=True
         )
 
-    # Tab 5: Future Research Questions
+    # ---- Tab 5: Future Research Questions ----
     with tab5:
+        badge = gemini_badge if results else waiting_badge
+        questions = results.get("questions", []) if results else []
+        content_html = (
+            render_list_items(questions, "#BE185D")
+            if results else
+            '<p style="color:#64748B;font-size:0.9rem;">Run analysis to generate future research questions.</p>'
+        )
         st.markdown(
             f"""
             <div class="dimension-card dim-questions">
                 <div class="dimension-header">
                     <div class="dimension-title-group">
-                        <div class="dimension-icon-bubble">
-                            {icon_svg("compass", size=20, color="#BE185D")}
-                        </div>
+                        <div class="dimension-icon-bubble">{icon_svg("compass", size=20, color="#BE185D")}</div>
                         <div>
                             <div class="dimension-name">Future Research Questions</div>
-                            <div class="dimension-target">Open Challenges, Limitations & Next Steps</div>
+                            <div class="dimension-target">Open Challenges, Limitations &amp; Next Steps</div>
                         </div>
                     </div>
-                    <span class="badge-placeholder">
-                        <span class="icon-inline">{icon_svg("clock", size=13, color="#92400E")}</span>
-                        Awaiting Gemini API Integration
-                    </span>
+                    {badge}
                 </div>
-                <p style="color: #475569; font-size: 0.9rem; line-height: 1.55; margin-bottom: 12px;">
-                    This section will highlight open questions, unaddressed limitations,
-                    and promising next steps implied by the study's conclusions.
-                </p>
-                <div class="wireframe-container">
-                    <strong>Planned Gemini Output Schema:</strong><br>
-                    - <em>Immediate Next Steps:</em> Logical follow-up experiments or clinical trials needed.<br>
-                    - <em>Recognized Limitations:</em> Scope constraints acknowledged in the work.<br>
-                    - <em>Broader Scientific Hypotheses:</em> New research questions enabled by these findings.<br>
-                    <div class="wireframe-note">[Live AI inference will replace this block upon Gemini API key configuration]</div>
-                </div>
+                {content_html}
             </div>
             """,
             unsafe_allow_html=True
         )
-
 
 def render_preview_area():
     """Render a clean placeholder preview before the user initiates analysis."""
@@ -1162,8 +1340,8 @@ def render_about_page():
                         Light SaaS dashboard UI, structured input workspace, character analytics, and outline icon system.
                     </div>
                     <div style="margin-bottom: 8px;">
-                        <span style="color: #2563EB; font-weight: 600;">[Phase 2 - Upcoming]</span><br>
-                        Google Gemini 1.5 API integration with structured JSON schemas and streaming insight generation.
+                        <span style="color: #059669; font-weight: 600;">[Phase 2 - Live]</span><br>
+                        Gemini 3.5 Flash-Lite API integration with structured JSON schema outputs across 5 research dimensions.
                     </div>
                     <div>
                         <span style="color: #64748B; font-weight: 600;">[Phase 3 - Planned]</span><br>
