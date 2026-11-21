@@ -1,6 +1,49 @@
-.venv/
-__pycache__/
-*.pyc
+# Environment files & secrets
 .env
+*.env
+backend/.env
+frontend/.env
 .streamlit/secrets.toml
 .streamlit/credentials.toml
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache & build
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Generated files
+*.log

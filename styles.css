@@ -1,13 +1,12 @@
-/* ====================================================================
-   ResearchMate AI - Professional Light SaaS Dashboard Stylesheet
-   Designed for STEM2Connect AI Hackathon
-   ==================================================================== */
 
-/* --- 1. Global Layout & Typography --- */
-html, body, [class*="css"] {
+html,
+body,
+[class*="css"] {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    color: #0F172A; /* Deep Navy / Slate 900 */
-    background-color: #F8FAFC; /* Slate 50 */
+    color: #0F172A;
+    /* Deep Navy / Slate 900 */
+    background-color: #F8FAFC;
+    /* Slate 50 */
 }
 
 /* App container spacing */
@@ -153,12 +152,12 @@ section[data-testid="stSidebar"] .block-container {
 }
 
 /* Ensure no default radio label is visible */
-div[data-testid="stRadio"] > label {
+div[data-testid="stRadio"]>label {
     display: none !important;
 }
 
 /* Sidebar navigation radio items */
-div[data-testid="stRadio"] > div[role="radiogroup"] {
+div[data-testid="stRadio"]>div[role="radiogroup"] {
     gap: 4px !important;
     display: flex !important;
     flex-direction: column !important;
@@ -182,7 +181,7 @@ div[data-testid="stRadio"] label {
 }
 
 /* Hide default radio bullet circle for clean SaaS navigation */
-div[data-testid="stRadio"] label > div:first-child {
+div[data-testid="stRadio"] label>div:first-child {
     display: none !important;
 }
 
@@ -253,7 +252,8 @@ div[data-testid="stRadio"] label:has(input:checked) span {
 .hero-card {
     background: #FFFFFF;
     border: 1px solid #E2E8F0;
-    border-top: 4px solid #2563EB; /* Professional Blue Accent */
+    border-top: 4px solid #2563EB;
+    /* Professional Blue Accent */
     border-radius: 12px;
     padding: 30px 28px;
     margin-bottom: 22px;
@@ -372,7 +372,7 @@ div[data-testid="stFileUploader"] {
 
 /* Primary Button Styling */
 div[data-testid="stButton"] button[kind="primary"],
-.stButton > button[kind="primary"] {
+.stButton>button[kind="primary"] {
     background-color: #2563EB !important;
     color: #FFFFFF !important;
     border: none !important;
@@ -385,7 +385,7 @@ div[data-testid="stButton"] button[kind="primary"],
 }
 
 div[data-testid="stButton"] button[kind="primary"]:hover,
-.stButton > button[kind="primary"]:hover {
+.stButton>button[kind="primary"]:hover {
     background-color: #1D4ED8 !important;
     box-shadow: 0 4px 8px rgba(37, 99, 235, 0.25) !important;
     transform: translateY(-1px);
@@ -393,7 +393,7 @@ div[data-testid="stButton"] button[kind="primary"]:hover,
 
 /* Secondary Button Styling */
 div[data-testid="stButton"] button[kind="secondary"],
-.stButton > button[kind="secondary"] {
+.stButton>button[kind="secondary"] {
     background-color: #FFFFFF !important;
     color: #334155 !important;
     border: 1px solid #CBD5E1 !important;
@@ -405,7 +405,7 @@ div[data-testid="stButton"] button[kind="secondary"],
 }
 
 div[data-testid="stButton"] button[kind="secondary"]:hover,
-.stButton > button[kind="secondary"]:hover {
+.stButton>button[kind="secondary"]:hover {
     background-color: #F1F5F9 !important;
     border-color: #94A3B8 !important;
     color: #0F172A !important;
@@ -470,9 +470,9 @@ div[data-testid="stButton"] button[kind="secondary"]:hover,
     padding: 22px;
     margin-bottom: 18px;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
-                box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
-                border-color 0.2s ease;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.2s ease;
 }
 
 .dimension-card:hover {
@@ -534,9 +534,11 @@ div[data-testid="stButton"] button[kind="secondary"]:hover,
     background-color: #E6F0FF !important;
     border: 1px solid #BFDBFE !important;
 }
+
 .dim-summary:hover {
     border-color: #93C5FD !important;
 }
+
 .dim-summary .dimension-icon-bubble,
 .dim-summary .feature-box-icon {
     background-color: #D5E7FF !important;
@@ -549,9 +551,11 @@ div[data-testid="stButton"] button[kind="secondary"]:hover,
     background-color: #E2F5F1 !important;
     border: 1px solid #B6E8DF !important;
 }
+
 .dim-objectives:hover {
     border-color: #75D8CA !important;
 }
+
 .dim-objectives .dimension-icon-bubble,
 .dim-objectives .feature-box-icon {
     background-color: #C8ECE5 !important;
@@ -564,9 +568,11 @@ div[data-testid="stButton"] button[kind="secondary"]:hover,
     background-color: #EEE8FF !important;
     border: 1px solid #DDD6FE !important;
 }
+
 .dim-findings:hover {
     border-color: #C4B5FD !important;
 }
+
 .dim-findings .dimension-icon-bubble,
 .dim-findings .feature-box-icon {
     background-color: #DFD5FE !important;
@@ -579,9 +585,11 @@ div[data-testid="stButton"] button[kind="secondary"]:hover,
     background-color: #FFF0DF !important;
     border: 1px solid #FED7AA !important;
 }
+
 .dim-keywords:hover {
     border-color: #FDBA74 !important;
 }
+
 .dim-keywords .dimension-icon-bubble,
 .dim-keywords .feature-box-icon {
     background-color: #FFE3C2 !important;
@@ -594,9 +602,11 @@ div[data-testid="stButton"] button[kind="secondary"]:hover,
     background-color: #FCE8F1 !important;
     border: 1px solid #FBCFE8 !important;
 }
+
 .dim-questions:hover {
     border-color: #F9A8D4 !important;
 }
+
 .dim-questions .dimension-icon-bubble,
 .dim-questions .feature-box-icon {
     background-color: #F9D1E4 !important;
@@ -686,9 +696,9 @@ div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
     height: 100%;
     display: flex;
     flex-direction: column;
-    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
-                box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
-                border-color 0.2s ease;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.2s ease;
 }
 
 .feature-box:hover {
@@ -739,9 +749,9 @@ div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
     height: 100%;
     display: flex;
     flex-direction: column;
-    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
-                box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
-                border-color 0.2s ease;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.2s ease;
 }
 
 .feature-box-gemini:hover {
@@ -803,9 +813,9 @@ div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
     align-items: center;
     height: 100%;
     box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
-    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
-                box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), 
-                border-color 0.2s ease;
+    transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.2s ease;
 }
 
 .workflow-card:hover {
@@ -844,11 +854,13 @@ div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
 .workflow-1:hover {
     border-color: #93C5FD;
 }
+
 .workflow-1 .workflow-step-pill {
     background: #E6F0FF;
     color: #1D4ED8;
     border: 1px solid #BFDBFE;
 }
+
 .workflow-1 .workflow-icon-bubble {
     background: #E6F0FF;
     color: #1D4ED8;
@@ -859,11 +871,13 @@ div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
 .workflow-2:hover {
     border-color: #C4B5FD;
 }
+
 .workflow-2 .workflow-step-pill {
     background: #EEE8FF;
     color: #6D28D9;
     border: 1px solid #DDD6FE;
 }
+
 .workflow-2 .workflow-icon-bubble {
     background: #EEE8FF;
     color: #6D28D9;
@@ -874,11 +888,13 @@ div[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
 .workflow-3:hover {
     border-color: #75D8CA;
 }
+
 .workflow-3 .workflow-step-pill {
     background: #E2F5F1;
     color: #0F766E;
     border: 1px solid #B6E8DF;
 }
+
 .workflow-3 .workflow-icon-bubble {
     background: #E2F5F1;
     color: #0F766E;
