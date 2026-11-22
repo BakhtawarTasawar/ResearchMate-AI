@@ -234,26 +234,69 @@ def test_13_and_14_profile_retrieval_and_session_clearing():
 
 
 # ---------------------------------------------------------------------------
-# Case 15: Research analysis works
+# Case 15: Research analysis — unauthenticated requests are rejected
 # ---------------------------------------------------------------------------
 
+def _get_test_token() -> str:
+    """Register a unique user and return a valid JWT for protected endpoint tests."""
+    uid = uuid.uuid4().hex[:8]
+    email = f"privacy_test_{uid}@university.edu"
+    pwd = "SecurePassword123!"
+    client.post("/api/v1/auth/register", json={"full_name": "Dr. Privacy Tester", "email": email, "password": pwd})
+    login_res = client.post("/api/v1/auth/login", json={"email": email, "password": pwd})
+    return login_res.json()["access_token"]
+
+
 def test_15_research_analysis_validation_and_flow():
-    """Verify research analysis endpoint validates input length and processes correctly."""
-    # Too short rejection
-    short_res = client.post("/api/v1/research/analyze", json={"text": "Short."})
+    """
+    Verify research analysis endpoint:
+    - Rejects unauthenticated requests with 401.
+    - Validates minimum text length (422).
+    """
+    # Unauthenticated — must return 401
+    unauth_res = client.post("/api/v1/research/analyze", json={"text": "Short."})
+    assert unauth_res.status_code == 401, (
+        f"Expected 401 for unauthenticated request, got {unauth_res.status_code}"
+    )
+
+    # Authenticated but too-short text — must return 422
+    token = _get_test_token()
+    short_res = client.post(
+        "/api/v1/research/analyze",
+        json={"text": "Short."},
+        headers={"Authorization": f"Bearer {token}"},
+    )
     assert short_res.status_code == 422
     assert "at least 50 characters" in str(short_res.json()["detail"])
 
 
 # ---------------------------------------------------------------------------
-# Case 16: PDF/TXT extraction works
+# Case 16: PDF/TXT extraction — unauthenticated requests are rejected
 # ---------------------------------------------------------------------------
 
 def test_16_pdf_and_txt_extraction():
-    """Verify document extraction parses TXT and validates files."""
+    """
+    Verify document extraction:
+    - Rejects unauthenticated requests with 401.
+    - Parses TXT successfully for authenticated users.
+    """
     sample_text = "Targeted therapeutic gene editing in pluripotency-maintained cells."
-    files = {"file": ("sample.txt", io.BytesIO(sample_text.encode("utf-8")), "text/plain")}
-    res = client.post("/api/v1/research/extract-text", files=files)
+
+    # Unauthenticated — must return 401
+    files_unauth = {"file": ("sample.txt", io.BytesIO(sample_text.encode("utf-8")), "text/plain")}
+    unauth_res = client.post("/api/v1/research/extract-text", files=files_unauth)
+    assert unauth_res.status_code == 401, (
+        f"Expected 401 for unauthenticated extract-text, got {unauth_res.status_code}"
+    )
+
+    # Authenticated — must return 200 with correct extraction
+    token = _get_test_token()
+    files_auth = {"file": ("sample.txt", io.BytesIO(sample_text.encode("utf-8")), "text/plain")}
+    res = client.post(
+        "/api/v1/research/extract-text",
+        files=files_auth,
+        headers={"Authorization": f"Bearer {token}"},
+    )
     assert res.status_code == 200
     data = res.json()
     assert data["success"] is True

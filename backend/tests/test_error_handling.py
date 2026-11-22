@@ -1,17 +1,38 @@
 """
 Error-handling, edge-case, and security tests for ResearchGate AI.
+
+Research endpoints are now authentication-protected.
+Tests that call protected endpoints either:
+  - Use get_current_user override (for unit-level error behaviour tests), or
+  - Obtain a real JWT from the auth flow (for integration-level tests).
 """
 from __future__ import annotations
 
 import io
+import uuid
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
 from app.services.research_service import ResearchAnalysisService
-from app.dependencies import research_service_dep
+from app.dependencies import research_service_dep, get_current_user
 
 client = TestClient(app)
+
+
+def _mock_user():
+    """Plain namespace satisfying route handler usage — avoids SQLAlchemy ORM constraints."""
+    from types import SimpleNamespace
+    return SimpleNamespace(id=8888, email="errortest@university.edu", full_name="Error Test Researcher", is_active=True)
+
+
+def _get_test_token() -> str:
+    uid = uuid.uuid4().hex[:8]
+    email = f"errhandler_{uid}@university.edu"
+    pwd = "SecurePassword123!"
+    client.post("/api/v1/auth/register", json={"full_name": "Error Handler", "email": email, "password": pwd})
+    login_res = client.post("/api/v1/auth/login", json={"email": email, "password": pwd})
+    return login_res.json()["access_token"]
 
 
 def test_malformed_gemini_json():
@@ -43,18 +64,29 @@ def test_strip_markdown_fences():
 
 
 def test_oversized_file_upload():
-    huge_bytes = b"0" * (11 * 1024 * 1024)
-    files = {"file": ("huge.txt", io.BytesIO(huge_bytes), "text/plain")}
-    response = client.post("/api/v1/research/extract-text", files=files)
-    assert response.status_code == 422
-    assert "exceeds the 10 MB size limit" in response.json()["detail"]
+    """Oversized files are rejected regardless of auth — Pydantic/extraction check fires first."""
+    # Override auth so the test focuses purely on file-size rejection, not auth rejection.
+    app.dependency_overrides[get_current_user] = lambda: _mock_user()
+    try:
+        huge_bytes = b"0" * (11 * 1024 * 1024)
+        files = {"file": ("huge.txt", io.BytesIO(huge_bytes), "text/plain")}
+        response = client.post("/api/v1/research/extract-text", files=files)
+        assert response.status_code == 422
+        assert "exceeds the 10 MB size limit" in response.json()["detail"]
+    finally:
+        app.dependency_overrides.clear()
 
 
 def test_invalid_extension():
-    files = {"file": ("script.sh", io.BytesIO(b"echo hello"), "application/x-sh")}
-    response = client.post("/api/v1/research/extract-text", files=files)
-    assert response.status_code == 422
-    assert "Unsupported file type" in response.json()["detail"]
+    """Unsupported file extensions are rejected — override auth to focus on extension check."""
+    app.dependency_overrides[get_current_user] = lambda: _mock_user()
+    try:
+        files = {"file": ("script.sh", io.BytesIO(b"echo hello"), "application/x-sh")}
+        response = client.post("/api/v1/research/extract-text", files=files)
+        assert response.status_code == 422
+        assert "Unsupported file type" in response.json()["detail"]
+    finally:
+        app.dependency_overrides.clear()
 
 
 def test_frontend_api_client_unreachable_backend():
@@ -80,6 +112,7 @@ def test_simulated_gemini_rate_limit_and_network_error():
             raise RuntimeError("Failed to reach the Gemini API. Please check your network connection and API key.")
 
     app.dependency_overrides[research_service_dep] = lambda: FailingService()
+    app.dependency_overrides[get_current_user] = lambda: _mock_user()
     try:
         response = client.post(
             "/api/v1/research/analyze",
@@ -93,6 +126,8 @@ def test_simulated_gemini_rate_limit_and_network_error():
 
 
 def test_valid_pdf_extraction():
+    """Valid PDF extraction requires authentication — supply a real JWT."""
+    token = _get_test_token()
     pdf_data = b"""%PDF-1.4
 1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
 2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
@@ -118,7 +153,11 @@ startxref
 428
 %%EOF"""
     files = {"file": ("paper.pdf", io.BytesIO(pdf_data), "application/pdf")}
-    response = client.post("/api/v1/research/extract-text", files=files)
+    response = client.post(
+        "/api/v1/research/extract-text",
+        files=files,
+        headers={"Authorization": f"Bearer {token}"},
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["success"] is True
@@ -127,13 +166,19 @@ startxref
 
 
 def test_scanned_or_blank_pdf_rejection():
+    """Blank PDFs are rejected with 422 — supply auth so the test focuses on content validation."""
+    token = _get_test_token()
     from pypdf import PdfWriter
     writer = PdfWriter()
     writer.add_blank_page(width=612, height=792)
     buf = io.BytesIO()
     writer.write(buf)
     files = {"file": ("blank.pdf", io.BytesIO(buf.getvalue()), "application/pdf")}
-    response = client.post("/api/v1/research/extract-text", files=files)
+    response = client.post(
+        "/api/v1/research/extract-text",
+        files=files,
+        headers={"Authorization": f"Bearer {token}"},
+    )
     assert response.status_code == 422
     assert "No readable text could be extracted" in response.json()["detail"]
 
@@ -155,3 +200,4 @@ def test_pydantic_validation_error_on_invalid_schema():
     }
     with pytest.raises(ValueError, match="did not match the required research|Response validation failed"):
         svc._validate_result(bad_data)
+

@@ -49,43 +49,50 @@ def render_navbar(current_page: str) -> None:
         unsafe_allow_html=True,
     )
 
-    # Streamlit Navigation Bar Columns — Responsive Flex Container
-    col_h, col_a, col_ab, _fill, col_auth1, col_auth2 = st.columns(
-        [0.85, 1.25, 0.85, 4.2, 1.15, 1.1], gap="small"
-    )
+    # Streamlit Navigation Bar Columns — layout differs by authentication state.
+    # Authenticated:   Home | Analyze Paper | About | <fill> | Profile | Sign Out
+    # Unauthenticated: <fill> | Sign In | Register
+    if is_auth:
+        col_h, col_a, col_ab, _fill, col_auth1, col_auth2 = st.columns(
+            [0.85, 1.25, 0.85, 4.2, 1.15, 1.1], gap="small"
+        )
 
-    with col_h:
-        is_active = (current_page == PAGE_HOME)
-        if st.button(
-            "Home",
-            key="nav_btn_home",
-            use_container_width=True,
-            type="primary" if is_active else "secondary",
-        ):
-            session.set_nav_page(PAGE_HOME)
-            st.rerun()
+        with col_h:
+            is_active = (current_page == PAGE_HOME)
+            if st.button(
+                "Home",
+                key="nav_btn_home",
+                use_container_width=True,
+                type="primary" if is_active else "secondary",
+            ):
+                session.set_nav_page(PAGE_HOME)
+                st.rerun()
 
-    with col_a:
-        is_active = (current_page == PAGE_ANALYZE)
-        if st.button(
-            "Analyze Paper",
-            key="nav_btn_analyze",
-            use_container_width=True,
-            type="primary" if is_active else "secondary",
-        ):
-            session.set_nav_page(PAGE_ANALYZE)
-            st.rerun()
+        with col_a:
+            is_active = (current_page == PAGE_ANALYZE)
+            if st.button(
+                "Analyze Paper",
+                key="nav_btn_analyze",
+                use_container_width=True,
+                type="primary" if is_active else "secondary",
+            ):
+                session.set_nav_page(PAGE_ANALYZE)
+                st.rerun()
 
-    with col_ab:
-        is_active = (current_page == PAGE_ABOUT)
-        if st.button(
-            "About",
-            key="nav_btn_about",
-            use_container_width=True,
-            type="primary" if is_active else "secondary",
-        ):
-            session.set_nav_page(PAGE_ABOUT)
-            st.rerun()
+        with col_ab:
+            is_active = (current_page == PAGE_ABOUT)
+            if st.button(
+                "About",
+                key="nav_btn_about",
+                use_container_width=True,
+                type="primary" if is_active else "secondary",
+            ):
+                session.set_nav_page(PAGE_ABOUT)
+                st.rerun()
+
+    else:
+        # Guest layout: brand fills the left; only auth actions appear on the right.
+        _, col_auth1, col_auth2 = st.columns([7.5, 1.15, 1.1], gap="small")
 
     if not is_auth:
         with col_auth1:
@@ -132,7 +139,11 @@ def render_navbar(current_page: str) -> None:
                 type="secondary",
             ):
                 session.logout()
-                session.set_nav_page(PAGE_HOME)
+                # Redirect to login page after logout; the auth gate in app.py
+                # would redirect PAGE_HOME anyway, but set it explicitly here
+                # so the user lands on the login form immediately.
+                session.set_auth_page("login")
+                session.set_nav_page(PAGE_AUTH)
                 st.rerun()
 
     st.markdown("<div class='navbar-bottom-border'></div>", unsafe_allow_html=True)

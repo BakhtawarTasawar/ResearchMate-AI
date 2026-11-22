@@ -1,5 +1,6 @@
 """
 API routes for research analysis and document extraction.
+All endpoints require a valid authenticated session (Bearer JWT).
 """
 from __future__ import annotations
 
@@ -7,7 +8,8 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
-from app.dependencies import extraction_service_dep, research_service_dep
+from app.dependencies import extraction_service_dep, research_service_dep, get_current_user
+from app.db.models import User
 from app.schemas import (
     AnalyzeResponse,
     AnalyzeTextRequest,
@@ -21,7 +23,7 @@ router = APIRouter(prefix="/research", tags=["Research"])
 
 
 # ---------------------------------------------------------------------------
-# POST /research/analyze  — analyse plain text
+# POST /research/analyze  — analyse plain text  (authenticated)
 # ---------------------------------------------------------------------------
 
 @router.post(
@@ -30,15 +32,16 @@ router = APIRouter(prefix="/research", tags=["Research"])
     summary="Analyse research text",
     description=(
         "Accepts a scientific abstract or paper text and returns five structured "
-        "research insight dimensions powered by Google Gemini."
+        "research insight dimensions powered by Google Gemini. Requires authentication."
     ),
 )
 def analyze_text(
     body: AnalyzeTextRequest,
     service: ResearchAnalysisService = Depends(research_service_dep),
+    current_user: User = Depends(get_current_user),
 ) -> AnalyzeResponse:
     settings = get_settings()
-    logger.info("POST /research/analyze  chars=%d", len(body.text))
+    logger.info("POST /research/analyze  chars=%d  user_id=%s", len(body.text), current_user.id)
 
     try:
         result = service.analyse(body.text)
@@ -64,23 +67,25 @@ def analyze_text(
 
 
 # ---------------------------------------------------------------------------
-# POST /research/extract-text  — extract text from PDF / TXT upload
+# POST /research/extract-text  — extract text from PDF / TXT upload  (authenticated)
 # ---------------------------------------------------------------------------
 
 @router.post(
     "/extract-text",
     response_model=ExtractTextResponse,
     summary="Extract text from uploaded document",
-    description="Upload a PDF or TXT file and receive its extracted plain text.",
+    description="Upload a PDF or TXT file and receive its extracted plain text. Requires authentication.",
 )
 async def extract_text(
     file: UploadFile = File(..., description="PDF or TXT file to extract text from."),
     service: DocumentExtractionService = Depends(extraction_service_dep),
+    current_user: User = Depends(get_current_user),
 ) -> ExtractTextResponse:
     logger.info(
-        "POST /research/extract-text  filename=%s content_type=%s",
+        "POST /research/extract-text  filename=%s content_type=%s  user_id=%s",
         file.filename,
         file.content_type,
+        current_user.id,
     )
 
     content_bytes = await file.read()

@@ -12,9 +12,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-# ---------------------------------------------------------------------------
-# Path bootstrap – allows importing sibling packages (config, services, etc.)
-# ---------------------------------------------------------------------------
+
 _HERE = Path(__file__).parent.resolve()
 if str(_HERE) not in sys.path:
     sys.path.insert(0, str(_HERE))
@@ -73,6 +71,19 @@ if session.get_backend_status() is None:
         session.set_backend_status("error", "Offline")
 
 # ---------------------------------------------------------------------------
+# Authentication Gate — evaluated BEFORE navbar or any protected content
+# ---------------------------------------------------------------------------
+# Protected pages require a valid authenticated session.
+# Unauthenticated visitors are redirected immediately to Login.
+# No protected content is rendered — not even one Streamlit frame.
+_PROTECTED_PAGES = {PAGE_HOME, PAGE_ANALYZE, PAGE_ABOUT}
+
+if not session.is_authenticated() and session.get_nav_page() in _PROTECTED_PAGES:
+    session.set_auth_page("login")
+    session.set_nav_page(PAGE_AUTH)
+    st.rerun()   # abort this render cycle; next cycle starts on the auth page
+
+# ---------------------------------------------------------------------------
 # Top navbar (replaces sidebar navigation)
 # ---------------------------------------------------------------------------
 current_page = session.get_nav_page()
@@ -83,14 +94,18 @@ render_navbar(current_page=current_page)
 # ---------------------------------------------------------------------------
 page = session.get_nav_page()
 
-if page == PAGE_HOME:
+if page == PAGE_AUTH:
+    auth_page.render()
+elif not session.is_authenticated():
+    # Safety fallback: if any unexpected page value reaches here unauthenticated,
+    # render the auth page rather than protected content.
+    auth_page.render()
+elif page == PAGE_HOME:
     home_page.render()
 elif page == PAGE_ANALYZE:
     analyze_page.render()
 elif page == PAGE_ABOUT:
     about_page.render()
-elif page == PAGE_AUTH:
-    auth_page.render()
 else:
     home_page.render()
 
