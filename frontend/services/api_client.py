@@ -138,11 +138,19 @@ class ResearchAPIClient:
     def _get(
         self, path: str, authenticated: bool = True
     ) -> dict[str, Any]:
+        headers = self._headers() if authenticated else {}
+        logger.debug(
+            "GET %s [authenticated=%s, has_token=%s, auth_header_attached=%s]",
+            path,
+            authenticated,
+            bool(self._token),
+            "Authorization" in headers,
+        )
         try:
             response = httpx.get(
                 self._base + path,
                 timeout=self._timeout,
-                headers=self._headers() if authenticated else {},
+                headers=headers,
             )
             return self._handle(response)
         except httpx.TimeoutException:
@@ -162,6 +170,13 @@ class ResearchAPIClient:
         **kwargs: Any,
     ) -> dict[str, Any]:
         headers = self._headers() if authenticated else {}
+        logger.debug(
+            "POST %s [authenticated=%s, has_token=%s, auth_header_attached=%s]",
+            path,
+            authenticated,
+            bool(self._token),
+            "Authorization" in headers,
+        )
 
         try:
             response = httpx.post(
@@ -223,15 +238,39 @@ class ResearchAPIClient:
         return data
 
 
-_client: ResearchAPIClient | None = None
-
-
 def get_api_client(token: str | None = None) -> ResearchAPIClient:
-    global _client
+    """
+    Get the API client instance for the current session.
 
-    if _client is None:
-        _client = ResearchAPIClient(token=token)
-    else:
-        _client.set_token(token)
+    Resolution order for authentication token:
+    1. Explicit `token` argument if provided.
+    2. Token stored in Streamlit session state (`session.get_auth_token()`).
+    3. Existing token already held by the client instance.
 
-    return _client
+    To guarantee multi-session and multi-user isolation in Streamlit, clients
+    are cached per-session in `st.session_state`. When called outside a Streamlit
+    context (e.g. backend unit tests, CLI scripts), a new client instance is returned.
+    """
+    # 1. Fallback to session token if not explicitly provided
+    resolved_token = token
+    if resolved_token is None:
+        try:
+            from utils import session
+            resolved_token = session.get_auth_token()
+        except Exception:
+            resolved_token = None
+
+    # 2. Store client per-session in Streamlit session_state if available
+    try:
+        import streamlit as st
+
+        if "_api_client" not in st.session_state or st.session_state["_api_client"] is None:
+            st.session_state["_api_client"] = ResearchAPIClient(token=resolved_token)
+
+        client: ResearchAPIClient = st.session_state["_api_client"]
+        if resolved_token is not None:
+            client.set_token(resolved_token)
+        return client
+    except Exception:
+        # Fallback for non-Streamlit environments (e.g. unit tests, CLI scripts)
+        return ResearchAPIClient(token=resolved_token)

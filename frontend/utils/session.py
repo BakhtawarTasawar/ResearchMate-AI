@@ -158,6 +158,8 @@ def logout() -> None:
     st.session_state[_AUTH_TOKEN] = None
     st.session_state[_AUTH_USER] = None
     st.session_state[_AUTH_PAGE] = "login"
+    if "_api_client" in st.session_state and st.session_state["_api_client"] is not None:
+        st.session_state["_api_client"].set_token(None)
     clear_analysis()
 
 
