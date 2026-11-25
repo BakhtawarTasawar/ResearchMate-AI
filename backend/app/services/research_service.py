@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from typing import Any
 
 from app.core.config import get_settings
@@ -16,8 +17,20 @@ from app.core.logging import get_logger
 from app.schemas.research import AnalysisResult
 from app.services.gemini_client import get_gemini_client
 from app.services.prompts import ANALYSIS_PROMPT_TEMPLATE
+from google.genai import errors as genai_errors
+
+try:
+    import httpx
+except ImportError:
+    try:
+        import httpx2 as httpx
+    except ImportError:
+        httpx = None
 
 logger = get_logger(__name__)
+
+MAX_ATTEMPTS: int = 3
+RETRY_DELAYS: tuple[float, ...] = (2.0, 4.0)
 
 
 class ResearchAnalysisService:
@@ -52,24 +65,69 @@ class ResearchAnalysisService:
             len(text),
         )
 
-        try:
-            response = self._client.models.generate_content(
-                model=self._settings.GEMINI_MODEL,
-                contents=prompt,
-                config={
-                    "response_mime_type": "application/json",
-                    "response_schema": AnalysisResult,
-                    "temperature": 0.2,
-                },
-            )
+        response = None
+        last_error: Exception | None = None
 
-        except Exception as exc:
-            logger.exception("Gemini generation failed")
+        for attempt in range(1, MAX_ATTEMPTS + 1):
+            try:
+                logger.info(
+                    "Calling Gemini API | model=%s | attempt=%d/%d",
+                    self._settings.GEMINI_MODEL,
+                    attempt,
+                    MAX_ATTEMPTS,
+                )
+                response = self._client.models.generate_content(
+                    model=self._settings.GEMINI_MODEL,
+                    contents=prompt,
+                    config={
+                        "response_mime_type": "application/json",
+                        "response_schema": AnalysisResult,
+                        "temperature": 0.2,
+                    },
+                )
+                break
+            except Exception as exc:
+                last_error = exc
+                if attempt < MAX_ATTEMPTS and self._is_temporary_error(exc):
+                    delay = RETRY_DELAYS[attempt - 1]
+                    logger.warning(
+                        "Temporary Gemini error on attempt %d/%d (code=%s): %s. Retrying in %.1fs...",
+                        attempt,
+                        MAX_ATTEMPTS,
+                        getattr(exc, "code", None),
+                        exc,
+                        delay,
+                    )
+                    time.sleep(delay)
+                else:
+                    if not self._is_temporary_error(exc):
+                        logger.error(
+                            "Permanent or non-retryable Gemini error on attempt %d (code=%s): %s",
+                            attempt,
+                            getattr(exc, "code", None),
+                            exc,
+                        )
+                    else:
+                        logger.error(
+                            "Gemini generation failed after %d attempts: %s",
+                            MAX_ATTEMPTS,
+                            exc,
+                        )
+                    break
+
+        if response is None:
+            logger.exception("Gemini generation failed permanently or exhausted all attempts", exc_info=last_error)
+
+            if isinstance(last_error, genai_errors.APIError) and last_error.code in {429, 503}:
+                raise RuntimeError(
+                    "The AI analysis service is currently experiencing high demand. "
+                    "Please try again in a few moments."
+                ) from last_error
 
             raise RuntimeError(
                 "The AI analysis service could not complete your request. "
                 "Please check your Gemini API configuration and try again."
-            ) from exc
+            ) from last_error
 
         raw = response.text
 
@@ -91,6 +149,34 @@ class ResearchAnalysisService:
         logger.info("Research analysis completed successfully")
 
         return result
+
+    @staticmethod
+    def _is_temporary_error(exc: Exception) -> bool:
+        """
+        Determine if an exception represents a temporary, retryable error.
+
+        Temporary errors:
+        - HTTP 503 (Service Unavailable / High Demand)
+        - HTTP 429 (Rate Limit / Resource Exhausted)
+        - HTTP 500, 502, 504 (Server-side transient failures)
+        - Network/connection timeouts and transport errors
+
+        Permanent errors (HTTP 400, 401, 403, 404, etc.) are never retried.
+        """
+        if isinstance(exc, genai_errors.APIError):
+            if exc.code in {429, 500, 502, 503, 504}:
+                return True
+            if isinstance(exc, genai_errors.ServerError):
+                return True
+            return False
+
+        if isinstance(exc, (ConnectionError, TimeoutError)):
+            return True
+
+        if httpx is not None and isinstance(exc, (httpx.TimeoutException, httpx.ConnectError)):
+            return True
+
+        return False
 
     @staticmethod
     def _strip_code_fences(text: str) -> str:
