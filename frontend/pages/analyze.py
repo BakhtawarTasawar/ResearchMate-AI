@@ -61,7 +61,7 @@ def render() -> None:
         if not cached_info or cached_info.get("key") != file_key:
             with st.spinner("Processing uploaded research document..."):
                 try:
-                    client = get_api_client()
+                    client = get_api_client(token=session.get_auth_token())
                     raw_bytes = uploaded_file.getvalue()
                     content_type = uploaded_file.type or "application/octet-stream"
 
@@ -225,7 +225,7 @@ def render() -> None:
                 with st.status("Analyzing research document...", expanded=True) as status_box:
                     st.write("Extracting methodology, experimental claims, and data points...")
                     try:
-                        client = get_api_client()
+                        client = get_api_client(token=session.get_auth_token())
                         st.write("Synthesizing structured research dimensions...")
                         response = client.analyze_text(effective_text)
                         session.set_analysis_result(response.get("result"))
