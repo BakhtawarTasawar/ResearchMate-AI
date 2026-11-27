@@ -1,166 +1,182 @@
-# ResearchMate AI — AI-Powered Scientific Research Assistant
+# ResearchMate AI
+### AI-Powered Scientific Research Assistant
 
-**ResearchMate AI** is a web-based scientific research assistant built for the **STEM2Connect AI Hackathon 2026**. It helps students, researchers, and academics quickly understand dense scientific papers and abstracts by transforming them into five structured research dimensions using Google Gemini, FastAPI, and Streamlit.
+ResearchMate AI is a web-based scientific research assistant developed for the **STEM2Connect AI Hackathon 2026**.
 
----
+We built ResearchMate AI to make scientific literature easier to understand and review. It takes research papers and abstracts and organizes their key information into five structured dimensions, helping students and researchers identify the main ideas, objectives, findings, and potential directions for further research.
 
-## Table of Contents
+The application combines Google Gemini, FastAPI, Streamlit, and PostgreSQL to provide an accessible research analysis workflow.
 
-- [Live Demo and Repository](#live-demo-and-repository)
-- [Project Overview](#project-overview)
-- [Five Structured Research Dimensions](#five-structured-research-dimensions)
-- [Technical Architecture](#technical-architecture)
-- [Technology Stack](#technology-stack)
-- [Installation and Local Setup](#installation-and-local-setup)
-- [API Documentation](#api-documentation)
-- [Running Tests](#running-tests)
-- [Challenges and Solutions](#challenges-and-solutions)
-- [Limitations](#limitations)
-- [License](#license)
+## Live Demo
 
----
+- **Application:** [ResearchMate AI](https://researchmate-ai-project.streamlit.app/)
+- **GitHub Repository:** [ResearchMate-AI](https://github.com/BakhtawarTasawar/ResearchMate-AI)
 
-## Live Demo and Repository
+## The Problem
 
-- **Live Application:** [https://researchmate-ai-project.streamlit.app/](https://researchmate-ai-project.streamlit.app/)
-- **GitHub Repository:** [https://github.com/BakhtawarTasawar/ResearchMate-AI](https://github.com/BakhtawarTasawar/ResearchMate-AI)
+Scientific papers often contain dense technical language, complex methodologies, statistical results, and detailed conclusions. Reviewing multiple papers can take considerable time, especially when we need to identify the most relevant information before moving forward with our research.
 
-### How to Test the Application
+We developed ResearchMate AI to simplify this initial review process.
 
-1. Open the live application link above.
-2. Create an account on the **Register** tab or sign in with existing credentials.
-3. Navigate to **Analyze Paper**.
-4. Paste a scientific abstract or upload a `.pdf` or `.txt` research document (up to 10 MB).
-5. Run the analysis to view the paper broken down into five structured research dimensions.
+Rather than returning a general conversational response, the application organizes the submitted research into five consistent sections. This gives users a clearer starting point for understanding a paper and deciding which parts deserve closer attention.
 
----
+## What We Built
 
-## Project Overview
+ResearchMate AI provides the following functionality:
 
-Scientific literature is often dense, technical, and time-consuming to read. Researchers and students frequently need to review dozens of papers to determine whether a study's methodology, empirical findings, and open questions are relevant to their work.
+- **Research Text Analysis:** Submit scientific abstracts or research text directly through the application.
+- **PDF and TXT Uploads:** Upload research documents for server-side text extraction.
+- **Structured AI Analysis:** Generate five research dimensions using Google Gemini.
+- **User Authentication:** Register, log in, and access protected research functionality.
+- **Input Validation:** Validate submitted content, supported file formats, and file size.
+- **API-Based Architecture:** Keep frontend functionality separate from backend processing.
+- **Structured Responses:** Validate AI-generated output using Pydantic schemas.
 
-**ResearchMate AI** addresses this problem by providing a structured workspace that:
+## Five Research Dimensions
 
-- Accepts raw pasted text, plain-text (`.txt`) files, or multi-page `.pdf` documents.
-- Extracts readable text server-side and validates input length.
-- Generates a consistent, five-part analytical breakdown powered by Google Gemini.
+Each submitted paper is analyzed across five sections:
 
-**Intended Users:** University students, academic researchers, literature reviewers, and STEM professionals seeking faster comprehension of scientific papers.
+| # | Dimension | Description |
+|---|---|---|
+| 1 | **Simple Summary** | A plain-language explanation of the research problem, methodology, and conclusion. |
+| 2 | **Research Objectives** | The main hypotheses, research questions, and objectives of the study. |
+| 3 | **Key Findings** | Important results, empirical observations, statistical outcomes, and comparisons. |
+| 4 | **Important Keywords** | 4–10 relevant scientific concepts and technical terms. |
+| 5 | **Future Research Questions** | Unresolved questions, study limitations, and possible directions for further research. |
 
----
+The generated analysis is intended to support the reading process, not replace the original research paper or independent academic evaluation.
 
-## Five Structured Research Dimensions
+## How It Works
 
-ResearchMate AI deconstructs submitted scientific text into five consistent output sections:
-
-| # | Dimension | Purpose | Accent Color |
-|---|---|---|---|
-| **1** | **Simple Summary** | Plain-language 2–3 sentence synthesis of the problem, methodology, and conclusion | Blue (`#1D4ED8`) |
-| **2** | **Research Objectives** | Core hypotheses, primary research questions, and specific aims | Teal (`#0C6B5E`) |
-| **3** | **Key Findings** | Empirical metrics, percentage changes, statistical significance, and comparative results | Violet (`#5B21B6`) |
-| **4** | **Important Keywords** | 4–10 high-salience scientific concepts and technical terms | Amber (`#92400E`) |
-| **5** | **Future Research Questions** | Open questions, study limitations, and forward-looking research directions | Rose (`#9D174D`) |
-
----
+1. **Registration and Login:** Users create an account or sign in to access the research workspace.
+2. **Submit Research:** Users paste an abstract or upload a PDF/TXT document.
+3. **Text Extraction:** The backend extracts readable content from uploaded documents.
+4. **Validation:** The submitted content is checked for supported formats and input requirements.
+5. **AI Processing:** The backend sends the research content to Google Gemini using structured prompts.
+6. **Response Validation:** The generated response is checked against predefined Pydantic schemas.
+7. **Results:** The frontend displays the analysis across the five research dimensions.
 
 ## Technical Architecture
 
-ResearchMate AI uses a **two-tier decoupled architecture** separating the Streamlit user interface from the FastAPI backend and AI processing layer.
+We use a decoupled architecture in which the frontend and backend have separate responsibilities.
+
+- **Frontend:** Streamlit manages the user interface, navigation, authentication state, file submission, and results presentation.
+- **Backend:** FastAPI handles authentication, API requests, input validation, document extraction, database access, and AI processing.
+- **Database:** PostgreSQL stores user account information. SQLAlchemy manages database interactions, while Alembic handles migrations.
+- **AI Integration:** Google Gemini generates structured research analysis through the Google GenAI SDK.
+
+### Project Structure
 
 ```text
 ResearchMate-AI/
 │
-├── frontend/                       # Streamlit Client Application
-│   ├── app.py                      # Entry point, auth gate, navbar & page routing
+├── frontend/
+│   ├── app.py
 │   ├── pages/
-│   │   ├── auth.py                 # Login & registration workflows
-│   │   ├── home.py                 # Dashboard overview & workflow pillars
-│   │   ├── analyze.py              # Text editor, file upload & analysis results view
-│   │   └── about.py                # Project mission & architecture overview
+│   │   ├── auth.py
+│   │   ├── home.py
+│   │   ├── analyze.py
+│   │   └── about.py
 │   ├── components/
-│   │   └── ui.py                   # Reusable cards, badges, navbar & footer
+│   │   └── ui.py
 │   ├── services/
-│   │   └── api_client.py           # Session-scoped httpx client for FastAPI
+│   │   └── api_client.py
 │   ├── utils/
-│   │   ├── session.py              # Typed Streamlit session-state manager
-│   │   └── icons.py                # Lucide-style SVG outline icon system
+│   │   ├── session.py
+│   │   └── icons.py
 │   ├── styles/
-│   │   └── styles.css              # Custom CSS styling and responsive layout
+│   │   └── styles.css
 │   ├── assets/
-│   │   └── favicon.svg             # Application favicon
 │   ├── config/
-│   │   └── settings.py             # Frontend configuration & page constants
+│   │   └── settings.py
 │   └── requirements.txt
 │
-├── backend/                        # FastAPI Service & AI Engine
+├── backend/
 │   ├── app/
-│   │   ├── main.py                 # FastAPI app, lifespan, CORS & error handlers
+│   │   ├── main.py
 │   │   ├── api/
 │   │   │   └── routes/
-│   │   │       ├── auth.py         # /auth/register, /auth/login, /auth/me
-│   │   │       ├── health.py       # /health
-│   │   │       └── research.py     # /research/extract-text, /research/analyze
+│   │   │       ├── auth.py
+│   │   │       ├── health.py
+│   │   │       └── research.py
 │   │   ├── core/
-│   │   │   ├── config.py           # Settings & environment validation
-│   │   │   ├── logging.py          # Centralised logger
-│   │   │   └── security.py         # Argon2 password hashing & JWT utilities
+│   │   │   ├── config.py
+│   │   │   ├── logging.py
+│   │   │   └── security.py
 │   │   ├── db/
-│   │   │   ├── database.py         # SQLAlchemy engine & session management
-│   │   │   └── models.py           # User database model
-│   │   ├── dependencies/           # FastAPI dependency injection providers
+│   │   │   ├── database.py
+│   │   │   └── models.py
+│   │   ├── dependencies/
 │   │   ├── schemas/
-│   │   │   └── research.py         # Pydantic request & response schemas
+│   │   │   └── research.py
 │   │   └── services/
-│   │       ├── gemini_client.py    # Google GenAI client initialisation
-│   │       ├── prompts.py          # Structured scientific prompt templates
-│   │       ├── research_service.py # Gemini calls, retries, JSON & schema validation
-│   │       └── extraction_service.py # PDF / TXT extraction via pypdf
-│   ├── migrations/                 # Alembic database migrations
-│   ├── tests/                      # Backend pytest suite
-│   ├── .env.example
+│   │       ├── gemini_client.py
+│   │       ├── prompts.py
+│   │       ├── research_service.py
+│   │       └── extraction_service.py
+│   ├── migrations/
+│   ├── tests/
 │   └── requirements.txt
 │
 ├── .streamlit/
-│   └── config.toml                 # Streamlit theme & server configuration
-├── docker-compose.yml              # Multi-container PostgreSQL, backend & frontend setup
-├── .env.example                    # Root environment template
+├── docker-compose.yml
+├── .env.example
 └── README.md
 ```
 
-### Component Responsibilities
+### Core Components
 
-- **Streamlit Frontend (`frontend/`):** Renders the user interface, enforces an authentication gate before displaying protected pages, manages per-user session state (`st.session_state`), and communicates with the backend exclusively via HTTP.
-- **FastAPI Backend (`backend/`):** Handles user registration and login, validates file uploads and text payloads, manages database sessions, and orchestrates AI requests.
-- **Google Gemini API (`gemini_client.py`, `research_service.py`):** Generates structured research analyses using `gemini-3.5-flash-lite` via the `google-genai` SDK. The `GEMINI_API_KEY` is stored strictly on the backend and never exposed to the frontend.
-- **PDF & Text Extraction (`extraction_service.py`):** Parses uploaded `.pdf` files server-side using `pypdf` (supporting multi-page documents while rejecting encrypted or empty/image-only PDFs) and decodes `.txt` files using UTF-8 with a Latin-1 fallback.
-- **Authentication & API Communication (`auth.py`, `security.py`, `api_client.py`):** Uses Argon2 password hashing (`pwdlib`) and Bearer JWT tokens (`PyJWT`). The frontend stores each user's API client in `st.session_state` to isolate authentication tokens per session.
-- **Structured AI Response Validation (`schemas/research.py`, `research_service.py`):** Requests JSON output conforming to `AnalysisResult`, strips accidental Markdown code fences, and validates all five fields with Pydantic v2 before returning results.
+**Frontend — Streamlit**
 
----
+Provides the user-facing application, authentication workflows, page navigation, file uploads, and research result presentation. It communicates with the backend through HTTP requests.
+
+**Backend — FastAPI**
+
+Provides versioned REST API endpoints for authentication, health checks, document extraction, and research analysis. It also manages database sessions and coordinates AI processing.
+
+**AI Processing — Google Gemini**
+
+We integrated `gemini-3.5-flash-lite` through the `google-genai` SDK. Structured prompts guide the model to return the five research dimensions in a consistent format. The Gemini API key is kept on the backend.
+
+**Document Extraction — pypdf**
+
+Uploaded PDF documents are processed server-side using `pypdf`. The extraction service handles multi-page documents and validates encrypted, empty, or image-only PDFs. TXT files are decoded using UTF-8 with a Latin-1 fallback.
+
+**Authentication and Security**
+
+User passwords are hashed using Argon2 through `pwdlib`. JWT access tokens are handled using PyJWT. Protected API requests require valid authentication, and frontend API client instances are maintained in Streamlit session state.
+
+**Response Validation — Pydantic**
+
+AI responses are validated against the `AnalysisResult` schema using Pydantic v2. The backend also handles accidental Markdown code fences before parsing generated JSON.
 
 ## Technology Stack
 
-| Role | Technology |
+| Area | Technology |
 |---|---|
-| **Programming Language** | Python 3.10+ |
-| **Frontend** | Streamlit, `httpx`, `python-dotenv` |
-| **Backend** | FastAPI, Uvicorn |
-| **AI Model & SDK** | Google Gemini (`gemini-3.5-flash-lite`) via `google-genai` |
-| **PDF Processing** | `pypdf` |
-| **Data Validation** | Pydantic v2 |
-| **Database & Migrations** | PostgreSQL (`psycopg`), SQLAlchemy 2.0, Alembic |
-| **Authentication** | `PyJWT` (Bearer JWT), `pwdlib[argon2]` |
-| **Deployment** | Streamlit Community Cloud (frontend), Docker / Docker Compose (containerized stack) |
+| Language | Python |
+| Frontend | Streamlit |
+| HTTP Client | HTTPX |
+| Backend | FastAPI, Uvicorn |
+| AI Model | Google Gemini (`gemini-3.5-flash-lite`) |
+| AI SDK | Google GenAI |
+| Document Processing | pypdf |
+| Validation | Pydantic v2 |
+| Database | PostgreSQL |
+| ORM | SQLAlchemy 2.0 |
+| Migrations | Alembic |
+| Authentication | PyJWT, pwdlib (Argon2) |
+| Containerization | Docker, Docker Compose |
+| Testing | Pytest |
 
----
-
-## Installation and Local Setup
+## Getting Started
 
 ### Prerequisites
 
 - Python 3.10 or higher
-- PostgreSQL database (local instance or Docker)
-- A Google Gemini API key from [Google AI Studio](https://aistudio.google.com/)
+- PostgreSQL or Docker with Docker Compose
+- Google Gemini API key from [Google AI Studio](https://aistudio.google.com/)
+- Git
 
 ### 1. Clone the Repository
 
@@ -169,88 +185,134 @@ git clone https://github.com/BakhtawarTasawar/ResearchMate-AI.git
 cd ResearchMate-AI
 ```
 
-### 2. Backend Setup (`backend/`)
+### 2. Backend Setup
 
-The Gemini API key, JWT secret, and database connection string are kept strictly server-side in `backend/.env` and are never exposed in frontend code.
+Navigate to the backend directory:
 
 ```bash
 cd backend
+```
+
+Create the environment file:
+
+```bash
 cp .env.example .env
 ```
 
-Edit `backend/.env` and configure the required variables (do not commit `.env` or share real secrets):
+Configure the required variables in `backend/.env`:
 
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
 GEMINI_MODEL=gemini-3.5-flash-lite
 FRONTEND_URL=http://localhost:8501
 
-# Required by backend/app/db/database.py and backend/app/core/security.py
-DATABASE_URL=postgresql+psycopg://postgres:your_password@localhost:5432/researchmate
-JWT_SECRET_KEY=replace_with_a_long_random_secret_string
+DATABASE_URL=your_postgresql_connection_string
+JWT_SECRET_KEY=your_long_random_secret
 ```
 
-Install dependencies, apply database migrations (if needed), and start the FastAPI server:
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
+```
+
+Start the backend:
+
+```bash
 uvicorn app.main:app --reload --port 8000
 ```
 
-Verify the backend is running:
-- Health check: `http://localhost:8000/api/v1/health`
-- Interactive Swagger docs: `http://localhost:8000/docs`
+The backend will be available at:
 
-### 3. Frontend Setup (`frontend/`)
+- Health check: http://localhost:8000/api/v1/health
+- Swagger documentation: http://localhost:8000/docs
 
-Open a new terminal window from the repository root:
+### 3. Frontend Setup
+
+Open another terminal from the repository root:
 
 ```bash
 cd frontend
+```
+
+Create the environment file:
+
+```bash
 cp .env.example .env
 ```
 
-By default, `frontend/.env` points to the local backend:
+Configure the backend URL:
 
 ```env
 BACKEND_API_URL=http://localhost:8000/api/v1
 ```
 
-Install frontend dependencies and start Streamlit:
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
+```
+
+Run Streamlit:
+
+```bash
 streamlit run app.py
 ```
 
-Open `http://localhost:8501` in your browser.
+Open the application at:
 
----
+http://localhost:8501
+
+### 4. Docker Setup
+
+We also provide a Docker Compose configuration to run the PostgreSQL database, FastAPI backend, and Streamlit frontend as separate services.
+
+From the repository root:
+
+```bash
+docker compose up --build
+```
+
+To stop the services:
+
+```bash
+docker compose down
+```
+
+The PostgreSQL data is stored in a persistent Docker volume.
+
+**Security:** Real API keys, database passwords, JWT secrets, and production credentials must be configured through environment variables. They should never be committed to the repository.
 
 ## API Documentation
 
-All endpoints are prefixed with `/api/v1`. Protected endpoints require an `Authorization: Bearer <access_token>` header obtained from `/api/v1/auth/login`.
+All API endpoints use the `/api/v1` prefix.
 
-| Endpoint | Method | Auth Required | Purpose |
+Protected endpoints require a valid Bearer access token obtained through the login endpoint.
+
+| Endpoint | Method | Authentication | Description |
 |---|---|---|---|
-| `/api/v1/health` | `GET` | No | Returns backend status, API version, and configured Gemini model |
-| `/api/v1/auth/register` | `POST` | No | Creates a new user account (`full_name`, `email`, `password`) |
-| `/api/v1/auth/login` | `POST` | No | Authenticates user credentials and returns a Bearer JWT `access_token` |
-| `/api/v1/auth/me` | `GET` | Yes | Returns the currently authenticated user's profile |
-| `/api/v1/research/extract-text` | `POST` | Yes | Accepts a multipart `.pdf` or `.txt` upload (max 10 MB) and returns extracted text |
-| `/api/v1/research/analyze` | `POST` | Yes | Analyzes 50–100,000 characters of scientific text and returns five structured dimensions |
+| `/api/v1/health` | GET | No | Checks backend availability. |
+| `/api/v1/auth/register` | POST | No | Creates a new user account. |
+| `/api/v1/auth/login` | POST | No | Authenticates a user and returns an access token. |
+| `/api/v1/auth/me` | GET | Yes | Returns the authenticated user's profile. |
+| `/api/v1/research/extract-text` | POST | Yes | Extracts text from PDF or TXT uploads. |
+| `/api/v1/research/analyze` | POST | Yes | Analyzes submitted scientific text. |
 
-### Example: `POST /api/v1/research/analyze`
+### Research Analysis Example
 
-**Request Body:**
+**Endpoint:** `POST /api/v1/research/analyze`
+
+Request:
 
 ```json
 {
-  "text": "Your scientific paper abstract or text (50 - 100,000 characters)..."
+  "text": "Scientific paper abstract or research text..."
 }
 ```
 
-**Response (`200 OK`):**
+The endpoint accepts research text between 50 and 100,000 characters.
+
+Example response:
 
 ```json
 {
@@ -268,36 +330,50 @@ All endpoints are prefixed with `/api/v1`. Protected endpoints require an `Autho
 }
 ```
 
----
+## Testing
 
-## Running Tests
+Backend tests are located in `backend/tests/`.
 
-Backend tests are located in `backend/tests/` and can be run with `pytest` when installed in your backend environment:
+Run the test suite with:
 
 ```bash
 cd backend
 pytest tests/ -v
 ```
 
----
+## Challenges We Addressed
 
-## Challenges and Solutions
+### PDF Text Extraction
 
-- **PDF Text Extraction:** Uploaded PDFs vary widely in encoding and structure, and some files are encrypted or image-only. `DocumentExtractionService` uses `pypdf` to extract text across all pages, explicitly detects password-protected PDFs, and returns clear validation errors when no readable text is found.
-- **Frontend–Backend Authentication:** In multi-user Streamlit deployments, a module-level singleton HTTP client can accidentally share or overwrite authentication tokens across sessions. `api_client.py` scopes `ResearchAPIClient` instances to `st.session_state` and resolves Bearer tokens from the active session.
-- **Gemini API Availability & Transient Errors:** External LLM APIs occasionally return temporary `503` (high demand) or `429` (rate limit) errors. `ResearchAnalysisService` implements automatic retries (up to 3 total attempts with 2-second and 4-second exponential backoff) for transient SDK/network errors while failing immediately on permanent errors such as `401` or `403`.
-- **Structured AI Response Handling:** Language models can occasionally wrap JSON output in Markdown code fences. The backend enforces `response_schema=AnalysisResult`, strips any code fences before `json.loads()`, and validates all required fields with Pydantic.
+PDF files vary in layout, encoding, and structure. Some are encrypted or contain scanned images instead of selectable text. We implemented server-side extraction with `pypdf` and validation to handle documents that do not contain readable text.
 
----
+### Authentication Across User Sessions
 
-## Limitations
+Streamlit serves multiple user sessions through the same application process. A shared HTTP client could cause authentication state to overlap between users. We scoped API client instances to individual Streamlit sessions and resolve Bearer tokens from the active session.
 
-- **API Dependency:** Analysis requires an active internet connection and depends on Google Gemini API availability and quota limits.
-- **Input & Extraction Quality:** Output accuracy depends on the clarity of the source paper and the quality of extracted text. Submitted text must be between 50 and 100,000 characters, and uploaded files are limited to 10 MB.
-- **No OCR for Scanned PDFs:** Scanned, image-only PDFs do not contain selectable text and cannot be processed by `pypdf` because OCR is not currently implemented.
+### External AI Service Errors
 
----
+Gemini requests can fail because of temporary service interruptions, network issues, or rate limits. We implemented retry handling for transient failures, with up to three attempts and increasing delays between retries. Permanent errors, such as authentication and permission failures, are not repeatedly retried.
 
-## License
+### Consistent AI Responses
 
-Developed for the **STEM2Connect AI Hackathon 2026**.
+Language models can return unexpected formatting, including JSON wrapped in Markdown code fences. We handle this formatting and validate the resulting data against predefined Pydantic schemas before returning it to the frontend.
+
+## Current Limitations
+
+- **Gemini API Dependency:** Research analysis requires an internet connection and depends on Google Gemini availability and quota limits.
+- **Input Length:** Submitted research text must contain between 50 and 100,000 characters.
+- **File Size:** Uploaded documents are limited to 10 MB.
+- **Scanned PDFs:** OCR is not currently implemented, so image-only PDFs cannot be processed as readable text.
+- **Source Quality:** The quality of generated analysis depends on the clarity and completeness of the submitted research content.
+
+## Project Information
+
+**Project:** ResearchMate AI  
+**Hackathon:** STEM2Connect AI Hackathon 2026  
+**Live Application:** https://researchmate-ai-project.streamlit.app/  
+**Repository:** https://github.com/BakhtawarTasawar/ResearchMate-AI
+
+We developed ResearchMate AI to make the initial review of scientific literature more organized and accessible. By combining document extraction, authentication, API-based backend processing, and generative AI, we brought these capabilities together in one focused research workflow.
+
+**Developed for the STEM2Connect AI Hackathon 2026.**
